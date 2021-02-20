@@ -17,7 +17,7 @@ use crate::tab::Tab;
 use crate::widget::WidgetRet;
 
 use libtiny_common::{ChanNameRef, MsgSource, MsgTarget, TabStyle};
-use term_input::{Arrow, Event, Key};
+use term_input::{Event, Key};
 pub use termbox_simple::{CellBuf, Termbox};
 
 #[derive(Debug)]
@@ -668,12 +668,12 @@ impl TUI {
                 }
             },
 
-            Key::AltArrow(Arrow::Left) => {
+            Key::ShiftLeft => {
                 self.move_tab_left();
                 TUIRet::KeyHandled
             }
 
-            Key::AltArrow(Arrow::Right) => {
+            Key::ShiftRight => {
                 self.move_tab_right();
                 TUIRet::KeyHandled
             }

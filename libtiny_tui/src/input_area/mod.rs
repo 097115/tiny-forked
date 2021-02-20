@@ -298,7 +298,7 @@ impl InputArea {
                 WidgetRet::KeyHandled
             }
 
-            Key::CtrlArrow(Arrow::Left) => {
+            Key::AltArrow(Arrow::Left) => {
                 if self.cursor > 0 {
                     let mut cur = self.cursor as usize;
                     let mut skipped = false;
@@ -318,7 +318,7 @@ impl InputArea {
                 WidgetRet::KeyHandled
             }
 
-            Key::CtrlArrow(Arrow::Right) => {
+            Key::AltArrow(Arrow::Right) => {
                 let len = self.current_buffer_len() as usize;
                 if (self.cursor as usize) < len {
                     let mut cur = self.cursor as usize;
