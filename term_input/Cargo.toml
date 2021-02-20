@@ -1,0 +1,16 @@
+[package]
+name = "term_input"
+version = "0.2.0"
+authors = ["Ömer Sinan Ağacan <omeragacan@gmail.com>"]
+description = "Input handling for xterm-compatible terminals"
+repository = "https://github.com/osa1/tiny"
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+libc = "0.2"
+log = "0.4"
+mio = "0.7"
+nix = "0.19"
+term_input_macros = { path = "../term_input_macros" }
+tokio = { version = "0.3.6", default-features = false, features = ["rt", "net", "stream"] }

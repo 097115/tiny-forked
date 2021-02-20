@@ -1,0 +1,18 @@
+[package]
+name = "termbox_simple"
+version = "0.2.3"
+authors = ["Ömer Sinan Ağacan <omeragacan@gmail.com>"]
+description = "An implementation of termbox API"
+repository = "https://github.com/osa1/tiny"
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+libc = "0.2"
+termion = "1.5"
+unicode-width = "0.1"
+
+[dev-dependencies]
+mio = "0.7"
+term_input = { path = "../term_input" }
+tokio = { version = "0.3.6", default-features = false, features = ["rt", "stream"] }
