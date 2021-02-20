@@ -1,0 +1,55 @@
+# This makes a (draft) release and uploads build artifacts.
+
+name: Make a release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  make_release:
+    name: Make release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install native dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install libdbus-1-dev pkg-config libssl-dev \
+                musl musl-dev musl-tools
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: true
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            target: x86_64-unknown-linux-musl
+            override: true
+
+      - name: Make release tarball (default, statically linked)
+        run: |
+          (cd tiny && RUST_BACKTRACE=1 \
+            cargo build --release --verbose --target=x86_64-unknown-linux-musl)
+          tar -C target/x86_64-unknown-linux-musl/release \
+            -czvf tiny-ubuntu-18.04-static.tar.gz tiny
+
+      - name: Upload executable
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: tiny-ubuntu-18.04-static.tar.gz
+          asset_name: tiny-ubuntu-18.04-static.tar.gz
+          asset_content_type: application/gzip
