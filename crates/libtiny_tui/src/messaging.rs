@@ -424,12 +424,14 @@ impl MessagingUI {
         self.nicks.remove(old_nick);
         self.nicks.insert(new_nick);
 
-        let line_idx = self.get_activity_line_idx(ts);
-        self.msg_area.modify_line(line_idx, |line| {
-            line.add_text(old_nick, SegStyle::Faded);
-            line.add_char('>', SegStyle::Nick);
-            line.add_text(new_nick, SegStyle::Faded);
-        });
+        if self.show_status {
+            let line_idx = self.get_activity_line_idx(ts);
+            self.msg_area.modify_line(line_idx, |line| {
+                line.add_text(old_nick, SegStyle::Faded);
+                line.add_char('>', SegStyle::Nick);
+                line.add_text(new_nick, SegStyle::Faded);
+            });
+        }
     }
 
     fn reset_activity_line(&mut self) {
