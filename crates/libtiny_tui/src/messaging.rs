@@ -245,7 +245,15 @@ fn get_input_field_max_height(window_height: i32) -> i32 {
 
 impl MessagingUI {
     fn add_timestamp(&mut self, ts: Timestamp) {
-        ts.stamp(&mut self.msg_area);
+        if let Some(ts_) = self.last_activity_ts {
+            if ts_ != ts {
+                ts.stamp(&mut self.msg_area);
+            } else if matches!(self.msg_area.layout(), Layout::Aligned { .. }) {
+                Timestamp::blank(&mut self.msg_area)
+            }
+        } else {
+            ts.stamp(&mut self.msg_area);
+        }
         self.last_activity_ts = Some(ts);
     }
 
@@ -424,14 +432,12 @@ impl MessagingUI {
         self.nicks.remove(old_nick);
         self.nicks.insert(new_nick);
 
-        if self.show_status {
-            let line_idx = self.get_activity_line_idx(ts);
-            self.msg_area.modify_line(line_idx, |line| {
-                line.add_text(old_nick, SegStyle::Faded);
-                line.add_char('>', SegStyle::Nick);
-                line.add_text(new_nick, SegStyle::Faded);
-            });
-        }
+        let line_idx = self.get_activity_line_idx(ts);
+        self.msg_area.modify_line(line_idx, |line| {
+            line.add_text(old_nick, SegStyle::Faded);
+            line.add_char('>', SegStyle::Nick);
+            line.add_text(new_nick, SegStyle::Faded);
+        });
     }
 
     fn reset_activity_line(&mut self) {

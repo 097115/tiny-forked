@@ -95,8 +95,8 @@ impl Default for KeyMap {
             (Key::Ctrl('x'), KeyAction::RunEditor),
             (Key::Ctrl('n'), KeyAction::TabNext),
             (Key::Ctrl('p'), KeyAction::TabPrev),
-            (Key::CtrlArrow(Arrow::Left), KeyAction::TabMoveLeft),
-            (Key::CtrlArrow(Arrow::Left), KeyAction::TabMoveRight),
+            (Key::AltArrow(Arrow::Left), KeyAction::TabMoveLeft),
+            (Key::AltArrow(Arrow::Right), KeyAction::TabMoveRight),
             (Key::AltChar('1'), KeyAction::TabGoto('1')),
             (Key::AltChar('2'), KeyAction::TabGoto('2')),
             (Key::AltChar('3'), KeyAction::TabGoto('3')),
@@ -243,39 +243,33 @@ impl<'de> Deserialize<'de> for MappedKey {
                         }
                     },
                     Some((k1, k2)) => match k1 {
-                        "alt" => match k2 {
-                            other => {
-                                if let Some(arrow) = parse_arrow(other) {
-                                    Key::AltArrow(arrow)
-                                } else if let Some(f_key) = parse_f_key(other) {
-                                    Key::AltF(f_key)
-                                } else {
-                                    Key::AltChar(single_key(other)?)
-                                }
+                        "alt" => {
+                            if let Some(arrow) = parse_arrow(k2) {
+                                Key::AltArrow(arrow)
+                            } else if let Some(f_key) = parse_f_key(k2) {
+                                Key::AltF(f_key)
+                            } else {
+                                Key::AltChar(single_key(k2)?)
                             }
-                        },
-                        "ctrl" => match k2 {
-                            other => {
-                                if let Some(arrow) = parse_arrow(other) {
-                                    Key::CtrlArrow(arrow)
-                                } else if let Some(f_key) = parse_f_key(other) {
-                                    Key::CtrlF(f_key)
-                                } else {
-                                    Key::Ctrl(single_key(other)?)
-                                }
+                        }
+                        "ctrl" => {
+                            if let Some(arrow) = parse_arrow(k2) {
+                                Key::CtrlArrow(arrow)
+                            } else if let Some(f_key) = parse_f_key(k2) {
+                                Key::CtrlF(f_key)
+                            } else {
+                                Key::Ctrl(single_key(k2)?)
                             }
-                        },
-                        "shift" => match k2 {
-                            other => {
-                                if let Some(arrow) = parse_arrow(other) {
-                                    Key::ShiftArrow(arrow)
-                                } else if let Some(f_key) = parse_f_key(other) {
-                                    Key::ShiftF(f_key)
-                                } else {
-                                    return Err(E::invalid_value(Unexpected::Str(other), &Self));
-                                }
+                        }
+                        "shift" => {
+                            if let Some(arrow) = parse_arrow(k2) {
+                                Key::ShiftArrow(arrow)
+                            } else if let Some(f_key) = parse_f_key(k2) {
+                                Key::ShiftF(f_key)
+                            } else {
+                                return Err(E::invalid_value(Unexpected::Str(k2), &Self));
                             }
-                        },
+                        }
                         unexp => return Err(E::invalid_value(Unexpected::Str(unexp), &Self)),
                     },
                 };
