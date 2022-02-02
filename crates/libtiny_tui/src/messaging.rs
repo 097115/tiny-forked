@@ -245,15 +245,7 @@ fn get_input_field_max_height(window_height: i32) -> i32 {
 
 impl MessagingUI {
     fn add_timestamp(&mut self, ts: Timestamp) {
-        if let Some(ts_) = self.last_activity_ts {
-            if ts_ != ts {
-                ts.stamp(&mut self.msg_area);
-            } else if matches!(self.msg_area.layout(), Layout::Aligned { .. }) {
-                Timestamp::blank(&mut self.msg_area)
-            }
-        } else {
-            ts.stamp(&mut self.msg_area);
-        }
+        ts.stamp(&mut self.msg_area);
         self.last_activity_ts = Some(ts);
     }
 
