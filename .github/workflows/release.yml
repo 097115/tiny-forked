@@ -1,55 +1,81 @@
-# This makes a (draft) release and uploads build artifacts.
-
-name: Make a release
+name: CD
 
 on:
   push:
-    tags: ['v*']
+    tags:
+      - "v*"
 
 jobs:
-  make_release:
-    name: Make release
-    runs-on: ubuntu-latest
+  publish:
+    name: Deploying ${{ matrix.build_target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build_target: [macos, linux32, linux64]
+        include:
+          - build_target: macos
+            os: macos-latest
+            artifact_suffix: macos-x86_64
+            target: x86_64-apple-darwin
+            use-cross: false
+          - build_target: linux64
+            os: ubuntu-latest
+            artifact_suffix: linux-x86_64
+            target: x86_64-unknown-linux-musl
+            use-cross: false
+          - build_target: linux32
+            os: ubuntu-latest
+            artifact_suffix: linux-x86_32
+            target: i686-unknown-linux-musl
+            use-cross: true
+#     env:
+#       RUSTFLAGS: -C target-feature=+crt-static
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Install native dependencies
+      - name: Set up Linux deps
+        if: matrix.os == 'ubuntu-latest'
         run: |
-            sudo apt-get update
-            sudo apt-get install libdbus-1-dev pkg-config libssl-dev \
-                musl musl-dev musl-tools
-
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          prerelease: true
-
-      - name: Get stable toolchain
+          sudo apt update
+          sudo apt install pkg-config musl musl-dev musl-tools
+      - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: stable
-            target: x86_64-unknown-linux-musl
-            override: true
-
-      - name: Make release tarball (default, statically linked)
+          toolchain: stable
+          override: true
+          target: ${{ matrix.target }}
+          profile: minimal
+      - name: Set up access
+        uses: actions/checkout@v2
+      - name: Set up cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.use-cross }}
+          command: build
+          args: --release --target ${{ matrix.target }} ${{ matrix.features }}
+#       - name: Tag
+#         shell: bash
+#         run: echo "##[set-output name=tag;]$(echo ${GITHUB_REF#refs/tags/})"
+#         id: extract_tag
+      - name: Pack
+        shell: bash
         run: |
-          (cd crates/tiny && RUST_BACKTRACE=1 \
-            cargo build --release --verbose --target=x86_64-unknown-linux-musl)
-          tar -C target/x86_64-unknown-linux-musl/release \
-            -czvf tiny-ubuntu-18.04-static.tar.gz tiny
-
-      - name: Upload executable
-        uses: actions/upload-release-asset@v1.0.1
+          cd target/
+          ls -la
+          cd ${{ matrix.target }}/
+          ls -la
+          cd release
+          ls -la
+          tar czvf tiny-${{ matrix.target }}.tar.gz tiny
+          shasum -a 256 tiny-${{ matrix.target }}.tar.gz > tiny-${{ matrix.target }}.sha256
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/${{ matrix.target }}/release/tiny-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: tiny-ubuntu-18.04-static.tar.gz
-          asset_name: tiny-ubuntu-18.04-static.tar.gz
-          asset_content_type: application/gzip
